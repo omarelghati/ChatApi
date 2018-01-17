@@ -11,9 +11,10 @@ using System;
 namespace ChatApi.Migrations
 {
     [DbContext(typeof(ChatContext))]
-    partial class ChatContextModelSnapshot : ModelSnapshot
+    [Migration("20180117111331_initial")]
+    partial class initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,7 +27,11 @@ namespace ChatApi.Migrations
 
                     b.Property<int>("Member2");
 
+                    b.Property<long?>("UserId");
+
                     b.HasKey("Member1", "Member2");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Chats");
                 });
@@ -106,8 +111,20 @@ namespace ChatApi.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("ChatApi.Models.Chat", b =>
+                {
+                    b.HasOne("ChatApi.Models.User")
+                        .WithMany("Chats")
+                        .HasForeignKey("UserId");
+                });
+
             modelBuilder.Entity("ChatApi.Models.Friendship", b =>
                 {
+                    b.HasOne("ChatApi.Models.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("ChatApi.Models.User", "Sender")
                         .WithMany("PossibleFriends")
                         .HasForeignKey("SenderId")
@@ -116,7 +133,7 @@ namespace ChatApi.Migrations
 
             modelBuilder.Entity("ChatApi.Models.Message", b =>
                 {
-                    b.HasOne("ChatApi.Models.Chat")
+                    b.HasOne("ChatApi.Models.Chat", "Chat")
                         .WithMany("Messages")
                         .HasForeignKey("ChatMember1", "ChatMember2");
                 });

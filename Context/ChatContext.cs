@@ -22,13 +22,20 @@ namespace ChatApi.Context
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<User>()
                        .Property(b => b.DateOfJoin)
-                       .HasDefaultValueSql("getdate()"); 
+                       .HasDefaultValueSql("getdate()");
 
+            modelBuilder.Entity<Chat>()
+             .HasKey(t => new { t.Member1, t.Member2 });
 
 
         }
 
         public DbSet<User> Users { get; set; }
+
+        public DbSet<Message> Messages { get; set; }
+
         public DbSet<Friendship> Friendship { get; set; }
+
+        public DbSet<Chat> Chats { get; set; }
     }
 }

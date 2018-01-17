@@ -23,44 +23,89 @@ namespace ChatProject.Controllers
             this.context = context;
         }
 
-        [HttpPost("getUsers/{id}")]
+        [HttpGet("getUsers/{id}")]
         public IActionResult getUsers(int id)
         {
-            var users = context.Users.ToList();
+            var curent = context.Users.Where(u => u.Id == id);
+            var users = context.Users.ToList().Except(curent);
             var possibleFriends = new List<User>();
             foreach (var user in users)
             {
-                if (user.Id != id && context.Friendship.FirstOrDefault(f => f.ReceiverId == user.Id) == null)
+                if (context.Friendship.FirstOrDefault(f => f.ReceiverId == user.Id || f.SenderId == user.Id) == null)
                 {
-                    user.MemberSince = Timer.calculate(user.DateOfJoin); 
+                    user.MemberSince = Timer.calculate(user.DateOfJoin);
                     user.RequestSent = user.PossibleFriends.Where(t => t.SenderId == user.Id).Where(f => f.status == false).ToList();
                     user.RequestReceived = user.PossibleFriends.ToList().Where(t => t.SenderId == user.Id).Where(f => f.status == false).ToList();
                     possibleFriends.Add(user);
                 }
             }
             return new ObjectResult(possibleFriends);
-
         }
 
         [HttpGet("friends/{id}")]
-        public JsonResult getFriendships(int id)
+        public IActionResult getFriendships(int id)
         {
-            var sent = context.Friendship.Where(f => f.SenderId == id).Where(x => x.status == false);
-            var received = context.Friendship.Where(e => e.ReceiverId == id).Where(x => x.status == false);
-            //var friends = context.Friendship.Where(f => f.SenderId==id);
-            //var temp = context.Friendship.Where(f => f.ReceiverId == id);
-            //friends.Concat(temp);
-            //friends = friends.Where(s => s.status == true);
-            foreach(var element in sent) {
-                element.Sender = context.Users.FirstOrDefault(u => u.Id == element.SenderId);
-                element.Receiver = context.Users.FirstOrDefault(u => u.Id == element.ReceiverId);
+            var sent = context.Friendship.Where(f => f.SenderId == id && f.status == true);
+            var friends = new List<User>();
+            foreach(var snt in sent)
+            {
+                var tmp = context.Users.FirstOrDefault(u => u.Id == snt.ReceiverId);
+                friends.Add(new User { Id = tmp.Id, LName = tmp.LName, FName = tmp.FName, Username = tmp.Username, DateOfJoin = tmp.DateOfJoin });
             }
-            foreach(var element in received) {
-                element.Sender = context.Users.FirstOrDefault(u => u.Id == element.SenderId);
-                element.Receiver = context.Users.FirstOrDefault(u => u.Id == element.ReceiverId);
+            var sent2 = context.Friendship.Where(f => f.ReceiverId == id && f.status == true);
+            foreach (var snt in sent2)
+            {
+                var tmp = context.Users.FirstOrDefault(u => u.Id == snt.SenderId);
+                friends.Add(new User { Id = tmp.Id,LName = tmp.LName,FName = tmp.FName, Username = tmp.Username,DateOfJoin = tmp.DateOfJoin});
             }
-            return Json(new { sent = sent, received = received });
+            return new ObjectResult(friends);
         }
+
+        [HttpGet("getSent/{id}")]
+        public IActionResult getSent(int id)
+        {
+            var sent = context.Friendship.Where(f => f.SenderId == id && f.status == false).ToList();
+            foreach (var element in sent)
+            {
+                var tmp = context.Users.SingleOrDefault(u => u.Id == element.SenderId);
+                element.Sender = new User { Username = tmp.Username, FName = tmp.FName, LName = tmp.LName};
+                tmp = context.Users.SingleOrDefault(u => u.Id == element.ReceiverId);
+                element.Receiver = new User {Id = tmp.Id, Username = tmp.Username, FName = tmp.FName, LName = tmp.LName };
+            }
+            return new ObjectResult(sent);
+        }
+        [HttpGet("getReceived/{id}")]
+        public IActionResult getReceived(int id)
+        {
+            var sent = context.Friendship.Where(f => f.ReceiverId == id && f.status == false).ToList();
+            foreach (var element in sent)
+            {
+                var tmp = context.Users.SingleOrDefault(u => u.Id == element.SenderId);
+                element.Sender = new User { Username = tmp.Username, FName = tmp.FName, LName = tmp.LName };
+
+                tmp = context.Users.SingleOrDefault(u => u.Id == element.ReceiverId);
+                element.Receiver = new User { Id = tmp.Id, Username = tmp.Username, FName = tmp.FName, LName = tmp.LName };
+            }
+            return new ObjectResult(sent);
+        }
+        [HttpGet("cancelReq/{idr}/{ids}")]
+        public IActionResult cancelReq(int idr,int ids)
+        {
+            var friendship = context.Friendship.FirstOrDefault(u => u.SenderId == ids && u.ReceiverId == idr);
+            context.Friendship.Remove(friendship);
+            context.SaveChanges();
+            return Ok("done");
+        }
+
+        [HttpGet("acceptReq/{idr}/{ids}")]
+        public IActionResult acceptReq(int idr, int ids)
+        {
+            var friendship = context.Friendship.FirstOrDefault(u => u.SenderId == ids && u.ReceiverId == idr);
+            friendship.status = true;
+            context.SaveChanges();
+            return Ok("done");
+        }
+
         [HttpGet("getData")]
         public IActionResult getData(int id)
         {
@@ -88,10 +133,9 @@ namespace ChatProject.Controllers
             friendship.Receiver = receiver;
             context.Friendship.Add(friendship);
             context.SaveChanges();
-            context.Users.FirstOrDefault(u=> u.Id==idSender).PossibleFriends.Add(friendship);
-            context.SaveChanges();
+            context.Users.FirstOrDefault(u => u.Id == idSender).PossibleFriends.Add(friendship);
             context.Users.FirstOrDefault(u=> u.Id == idReceiver).PossibleFriends.Add(friendship);
-            context.SaveChanges();
+            //context.SaveChanges();
             return new ObjectResult(sender);
 
         }

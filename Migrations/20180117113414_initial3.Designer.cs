@@ -11,9 +11,10 @@ using System;
 namespace ChatApi.Migrations
 {
     [DbContext(typeof(ChatContext))]
-    partial class ChatContextModelSnapshot : ModelSnapshot
+    [Migration("20180117113414_initial3")]
+    partial class initial3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -108,6 +109,11 @@ namespace ChatApi.Migrations
 
             modelBuilder.Entity("ChatApi.Models.Friendship", b =>
                 {
+                    b.HasOne("ChatApi.Models.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("ChatApi.Models.User", "Sender")
                         .WithMany("PossibleFriends")
                         .HasForeignKey("SenderId")

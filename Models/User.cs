@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -37,8 +38,7 @@ namespace ChatApi.Models
         public string Phone { get; set; }
 
         public DateTime DateOfJoin { get; set; }
-
-        //[Required(ErrorMessage = "Please Upload a Valid Image File. Only jpg format allowed")]
+       //[Required(ErrorMessage = "Please Upload a Valid Image File. Only jpg format allowed")]
         //[DataType(DataType.Upload)]
         //[Display(Name = "Upload Product Image")]
         //[FileExtensions(Extensions = "jpg")]
@@ -53,7 +53,8 @@ namespace ChatApi.Models
 
         [NotMapped]
         public string MemberSince { get; set; }
-        
+       
+
     }
     public static class Timer
     {
