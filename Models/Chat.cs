@@ -9,13 +9,18 @@ namespace ChatApi.Models
 {
     public class Chat
     {
+        public long Id { get; set; }
         [NotMapped]
         public virtual List<User> Members { get; set; }
 
-        public int Member1 { get; set; }
+        public long Member1 { get; set; }
 
-        public int Member2 { get; set; }
+        public long Member2 { get; set; }
 
         public virtual List<Message> Messages { get; set; }
+        public Chat()
+        {
+            Messages = new List<Message>();
+        }
     }
 }

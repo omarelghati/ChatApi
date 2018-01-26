@@ -11,28 +11,15 @@ using System;
 namespace ChatApi.Migrations
 {
     [DbContext(typeof(ChatContext))]
-    partial class ChatContextModelSnapshot : ModelSnapshot
+    [Migration("20180117214107_rect2")]
+    partial class rect2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "2.0.1-rtm-125")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-            modelBuilder.Entity("ChatApi.Models.Chat", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int>("Member1");
-
-                    b.Property<int>("Member2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Chats");
-                });
 
             modelBuilder.Entity("ChatApi.Models.Friendship", b =>
                 {
@@ -47,30 +34,6 @@ namespace ChatApi.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Friendship");
-                });
-
-            modelBuilder.Entity("ChatApi.Models.Message", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<long>("ChatId");
-
-                    b.Property<string>("Content");
-
-                    b.Property<string>("CreationTime");
-
-                    b.Property<long>("ReceiverId");
-
-                    b.Property<bool>("Seen");
-
-                    b.Property<long>("SenderId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChatId");
-
-                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("ChatApi.Models.User", b =>
@@ -111,14 +74,6 @@ namespace ChatApi.Migrations
                         .WithMany("PossibleFriends")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Restrict);
-                });
-
-            modelBuilder.Entity("ChatApi.Models.Message", b =>
-                {
-                    b.HasOne("ChatApi.Models.Chat")
-                        .WithMany("Messages")
-                        .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

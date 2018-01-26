@@ -24,9 +24,6 @@ namespace ChatApi.Context
                        .Property(b => b.DateOfJoin)
                        .HasDefaultValueSql("getdate()");
 
-            modelBuilder.Entity<Chat>()
-             .HasKey(t => new { t.Member1, t.Member2 });
-
 
         }
 

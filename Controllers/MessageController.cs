@@ -25,6 +25,8 @@ namespace ChatApi.Controllers
         public IActionResult Post([FromBody] Message message)
         {
             message.CreationTime = DateTime.UtcNow.ToString("HH:mm");
+            dbcontext.Messages.Add(message);
+            dbcontext.SaveChanges();
             _messageHub.Clients.All.InvokeAsync("Send",message, message.ReceiverId);
             return Ok(message);
         }
@@ -33,18 +35,19 @@ namespace ChatApi.Controllers
         public IActionResult getChats(int userid)
         {
 
-            var chats = dbcontext.Chats.Where(m => m.Member1 == userid || m.Member2 == userid).ToList();
-            if (chats == null)
-                return NotFound("nothing is here");
-            foreach (var chat in chats)
-            {
-                var receiver = dbcontext.Users.FirstOrDefault(u => u.Id == chat.Member2);
-                var sender = dbcontext.Users.FirstOrDefault(u => u.Id == chat.Member1);
-                chat.Members = new List<User>();
-                chat.Members.Add(receiver);
-                chat.Members.Add(sender);
-                chat.Messages = dbcontext.Messages.Where(m => m.SenderId == userid || m.ReceiverId == userid).ToList();
-            }
+            var user = dbcontext.Chats.SingleOrDefault(u => u.Id == 2);
+            //var chats = dbcontext.Chats.SingleOrDefault(m => m.Member2 == 1);
+            //if (chats == null)
+            //    return NotFound("nothing is here");
+            //foreach (var chat in chats)
+            //{
+            //    var receiver = dbcontext.Users.FirstOrDefault(u => u.Id == chat.Member2);
+            //    var sender = dbcontext.Users.FirstOrDefault(u => u.Id == chat.Member1);
+            //    chat.Members = new List<User>();
+            //    chat.Members.Add(receiver);
+            //    chat.Members.Add(sender);
+            //    chat.Messages = dbcontext.Messages.Where(m => m.SenderId == userid || m.ReceiverId == userid).ToList();
+            //}
             //var chat = new Chat();
             //chat.Member1 = 1;
             //chat.Member2 =2 ;
@@ -57,7 +60,25 @@ namespace ChatApi.Controllers
             //dbcontext.Chats.Add(chat);
             //dbcontext.SaveChanges();
 
-            return new ObjectResult(chats);
+            return Ok(user);
+        }
+        [HttpGet("getSelectedChat/{idSelected}/{idCurrent}")]
+        public IActionResult getSelectedChat(int idSelected,int idCurrent)
+        {
+            var chat = dbcontext.Chats.FirstOrDefault(c => (c.Member1 == idSelected || c.Member2 == idSelected) && (c.Member1 == idCurrent || c.Member2 == idCurrent));
+            //var chat = dbcontext.Chats.FirstOrDefault(c => (c.Member1 == 1 && c.Member2 == 2));
+            if (chat == null)
+            {
+                var newchat = new Chat(); newchat.Member2 = idSelected; newchat.Member1 = idCurrent;
+                dbcontext.Chats.Add(newchat);
+                dbcontext.SaveChanges();
+                return Ok(newchat);
+            }
+
+            //dbcontext.Messages.Add(m);
+            var messages = dbcontext.Messages.Where(ms => ms.ChatId == chat.Id).ToList();
+            chat.Messages = messages;
+            return Ok(chat);
         }
 
     }
