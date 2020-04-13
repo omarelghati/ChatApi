@@ -40,7 +40,10 @@ namespace ChatApi.Models
 
         [NotMapped]
         public string MemberSince { get; set; }
-       
+
+        [NotMapped]
+        public string Token { get; set; }
+
 
     }
     public static class Timer

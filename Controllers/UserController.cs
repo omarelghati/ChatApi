@@ -2,14 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using ChatApi.Models;
 using ChatApi.Context;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ChatApi.Enums;
 using ChatApi.Uitilities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ChatProject.Controllers
 {
@@ -25,6 +23,7 @@ namespace ChatProject.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public IActionResult Login([FromBody] User logingUser)
         {
             var user = _context.Users.SingleOrDefault(u => u.Username.Equals(logingUser.Username) && u.Password.Equals(logingUser.Password));
@@ -108,6 +107,29 @@ namespace ChatProject.Controllers
             return new ObjectResult(requests);
         }
 
+        [HttpGet("GetFriends/{id}")]
+        public IActionResult GetFriends(string id)
+        {
+           var users = new List<User>();
+            var friendships = _context.Friendships
+                .Where(f => (f.SenderId == id || f.ReceiverId == id) && f.Status == FriendshipStatus.Accepted)
+                .ToList();
+
+            foreach (var friendship in friendships)
+            {
+                if (friendship.SenderId == id)
+                {
+                    users.Add(_context.Users.First(u => u.Id == friendship.ReceiverId));
+                }
+                else
+                {
+                    users.Add(_context.Users.First(u => u.Id == friendship.SenderId));
+                }
+            }
+
+            return new ObjectResult(users);
+        }
+
         [HttpGet("GetSent/{id}")]
         public IActionResult GetSent(string id)
         {
@@ -149,7 +171,7 @@ namespace ChatProject.Controllers
             return Ok();
         }
 
-        [HttpGet("acceptReq/{idr}/{ids}")]
+        [HttpGet("acceptFriendshipRequest/{idr}/{ids}")]
         public IActionResult AcceptFriendshipRequest(string idr, string ids)
         {
             var friendship = _context.Friendships.First(u => u.SenderId == ids && u.ReceiverId == idr);

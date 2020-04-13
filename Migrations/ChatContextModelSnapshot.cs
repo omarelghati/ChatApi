@@ -26,6 +26,8 @@ namespace ChatApi.Migrations
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<string>("LastMessage");
+
                     b.Property<string>("Member1");
 
                     b.Property<string>("Member2");
@@ -50,14 +52,14 @@ namespace ChatApi.Migrations
 
             modelBuilder.Entity("ChatApi.Models.Message", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
 
                     b.Property<string>("ChatId");
 
                     b.Property<string>("Content");
 
-                    b.Property<string>("CreationTime");
+                    b.Property<DateTime>("CreationTime");
 
                     b.Property<string>("ReceiverId");
 

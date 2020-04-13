@@ -3,34 +3,45 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using ChatApi.Hubs;
 using ChatApi.Models;
 using ChatApi.Context;
+using ChatApi.Uitilities;
 
 namespace ChatApi.Controllers
 {
+    [Microsoft.AspNetCore.Authorization.Authorize]
     [Route("api/message")]
     public class MessageController : Controller
     {
-        private IHubContext<MessageHub> _messageHub;
+        private MessageHub _messageHub;
         private ChatContext _context;
 
-        public MessageController(IHubContext<MessageHub> MessageHub, ChatContext dbcontext)
+        public MessageController(MessageHub MessageHub, ChatContext dbcontext)
         {
             _messageHub = MessageHub;
             this._context = dbcontext;
         }
         [HttpPost("post")]
-        public IActionResult Post([FromBody] Message message)
+        public async Task<IActionResult> Post([FromBody] Message message)
         {
             message.ReadableTime = DateTime.UtcNow.ToString("HH:mm");
             message.CreationTime = DateTime.UtcNow;
-            var chat = _context.Chats.First(c => c.Id == message.ChatId);
+            var chat = _context.Chats.FirstOrDefault(c => c.Id == message.ChatId);
+            if (chat.IsNull())
+            {
+                chat = Mapper.CreateChat(new AddMessageDTO
+                {
+                    TargetId = message.ReceiverId,
+                    SenderId = message.SenderId,
+                    Message = message.Content
+                });
+                _context.Chats.Add(chat);
+            }
             chat.LastMessage = message.Content;
             _context.Messages.Add(message);
             _context.SaveChanges();
-            _messageHub.Clients.All.InvokeAsync("Send", message, message.ReceiverId);
+            await _messageHub.Send(message.ReceiverId, message);
             return Ok(message);
         }
 

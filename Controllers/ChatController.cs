@@ -1,12 +1,15 @@
 ﻿using System.Linq;
 using ChatApi.Context;
+using ChatApi.Hubs;
 using ChatApi.Models;
 using ChatApi.Uitilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChatApi.Controllers
 {
     [Route("api/Chat")]
+    [Authorize]
     [Produces("application/json")]
     public class ChatController : Controller
     {
@@ -36,6 +39,5 @@ namespace ChatApi.Controllers
 
             return Ok();
         }
-
     }
 }

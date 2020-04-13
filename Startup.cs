@@ -9,6 +9,10 @@ using Microsoft.Extensions.DependencyInjection;
 using ChatApi.Hubs;
 using Microsoft.EntityFrameworkCore;
 using ChatApi.Context;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ChatApi
 {
@@ -21,25 +25,49 @@ namespace ChatApi
 
             var connection = @"Server=DESKTOP-QJI3MO8\SQLEXPRESS;Database=ChatProject;Trusted_Connection=True;ConnectRetryCount=0";
             services.AddDbContext<ChatContext>(options => options.UseSqlServer(connection));
-            services.AddSignalR();
             services.AddMvc();
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowSpecificOrigin",
-            builder => builder.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod());
+                options.AddPolicy("CorsPolicy",
+                    builder => builder.WithOrigins("http://localhost:4200")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials());
+            });
+            services.AddSignalR(o => o.EnableDetailedErrors = true);
+            services.AddSingleton<UserIdService>();
+            services.AddSingleton<IUserIdProvider, HubUser>();
+            services.AddSingleton<MessageHub>();
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@345")),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseCors("AllowSpecificOrigin");
+            app.UseCors("CorsPolicy");
+            app.UseAuthentication();
             app.UseStaticFiles();
             app.UseSignalR(routes =>
             {
-
-                routes.MapHub<MessageHub>("messaging");
+                routes.MapHub<MessageHub>("/messaging");
             });
+            //ConfigureAuth(app); // your authorisation configuration
             app.UseMvc();
         }
     }
