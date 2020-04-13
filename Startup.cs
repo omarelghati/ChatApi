@@ -19,7 +19,7 @@ namespace ChatApi
         public void ConfigureServices(IServiceCollection services)
         {
 
-            var connection = @"Server=(localdb)\mssqllocaldb;Database=ChatProject;Trusted_Connection=True;ConnectRetryCount=0";
+            var connection = @"Server=DESKTOP-QJI3MO8\SQLEXPRESS;Database=ChatProject;Trusted_Connection=True;ConnectRetryCount=0";
             services.AddDbContext<ChatContext>(options => options.UseSqlServer(connection));
             services.AddSignalR();
             services.AddMvc();
@@ -38,7 +38,7 @@ namespace ChatApi
             app.UseSignalR(routes =>
             {
 
-                routes.MapHub<MessageHub>("message");
+                routes.MapHub<MessageHub>("messaging");
             });
             app.UseMvc();
         }

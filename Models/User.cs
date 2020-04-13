@@ -1,32 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ChatApi.Models
 {
     public class User
     {
-        public User()
-        {
-            PossibleFriends = new List<Friendship>();
-            RequestSent = new List<Friendship>();
-            RequestReceived = new List<Friendship>();
-
-        }
-
-        public long Id { get; set; }
+        public string Id { get; set; }
         [Required]
         [StringLength(30)]
-        public string FName { get; set; }
+        public string FirstName { get; set; }
         [Required]
         [StringLength(30)]
-        public string LName { get; set; }
+        public string LastName { get; set; }
         [Required]
         [StringLength(30)]
         public string Username { get; set; }
@@ -45,7 +32,7 @@ namespace ChatApi.Models
         //public IFormFile Image { get; set; }
 
         //public string ImageName { get; set; }
-        public virtual ICollection<Friendship> PossibleFriends { get; set; }
+        //public virtual ICollection<Friendship> PossibleFriends { get; set; }
         [NotMapped]
         public virtual ICollection<Friendship> RequestSent{ get; set; }
         [NotMapped]

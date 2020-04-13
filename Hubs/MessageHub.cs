@@ -13,10 +13,10 @@ namespace ChatApi.Hubs
 
         private readonly static ConnectionMapping<string> _connections =
             new ConnectionMapping<string>();
-            string idUser;
-        public Task Send(string who,Message message)
+        string idUser;
+        public Task Send(string who, Message message)
         {
-           return Clients.Client(_connections.GetConnections(who)).InvokeAsync("Send", message);               
+            return Clients.Client(_connections.GetConnections(who)).InvokeAsync("Send", message);
         }
         public override Task OnConnectedAsync()
         {
@@ -25,12 +25,13 @@ namespace ChatApi.Hubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            _connections.Remove(idUser,Context.ConnectionId);
+            _connections.Remove(idUser, Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
-        public void SendData(string idUser) {
-            this.idUser= idUser;
-            _connections.Add(idUser,Context.ConnectionId);
+        public void SendData(string idUser)
+        {
+            this.idUser = idUser;
+            _connections.Add(idUser, Context.ConnectionId);
         }
     }
 }

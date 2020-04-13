@@ -14,69 +14,76 @@ namespace ChatApi.Controllers
     public class MessageController : Controller
     {
         private IHubContext<MessageHub> _messageHub;
-        private ChatContext dbcontext;
+        private ChatContext _context;
 
-        public MessageController(IHubContext<MessageHub> MessageHub,ChatContext dbcontext)
+        public MessageController(IHubContext<MessageHub> MessageHub, ChatContext dbcontext)
         {
             _messageHub = MessageHub;
-            this.dbcontext = dbcontext;
+            this._context = dbcontext;
         }
         [HttpPost("post")]
         public IActionResult Post([FromBody] Message message)
         {
-            message.CreationTime = DateTime.UtcNow.ToString("HH:mm");
-            dbcontext.Messages.Add(message);
-            dbcontext.SaveChanges();
-            _messageHub.Clients.All.InvokeAsync("Send",message, message.ReceiverId);
+            message.ReadableTime = DateTime.UtcNow.ToString("HH:mm");
+            message.CreationTime = DateTime.UtcNow;
+            var chat = _context.Chats.First(c => c.Id == message.ChatId);
+            chat.LastMessage = message.Content;
+            _context.Messages.Add(message);
+            _context.SaveChanges();
+            _messageHub.Clients.All.InvokeAsync("Send", message, message.ReceiverId);
             return Ok(message);
         }
 
         [HttpGet("getChats/{userid}")]
-        public IActionResult getChats(int userid)
+        public IActionResult getChats(string userId)
         {
+            var result = default(IActionResult);
+            var user = _context.Chats.First(u => u.Id == userId);
+            var chats = _context.Chats.Where(m => m.Member2 == userId || m.Member2 == userId).ToList();
+            if (chats.Any())
+            {
+                foreach (var chat in chats)
+                {
+                    var receiver = _context.Users.First(u => u.Id == chat.Member2);
+                    var sender = _context.Users.First(u => u.Id == chat.Member1);
+                    chat.Members = new List<User> { receiver, sender };
+                    chat.Messages = _context.Messages.Where(m => m.ChatId == chat.Id).ToList();
+                }
+                //var chat = new Chat();
+                //chat.Member1 = 1;
+                //chat.Member2 = 2;
+                //var message = new Message();
+                //message.Content = "hey";
+                //message.SenderId = 1;
+                //message.ReceiverId = 2;
+                //message.CreationTime = DateTime.Now.ToString();
+                //chat.Messages.Add(message);
+                //dbcontext.Chats.Add(chat);
+                //dbcontext.SaveChanges(); 
+                result = Ok(chats);
+            }
+            else
+            {
+                result = NotFound("nothing is here");
+            }
 
-            var user = dbcontext.Chats.SingleOrDefault(u => u.Id == 2);
-            //var chats = dbcontext.Chats.SingleOrDefault(m => m.Member2 == 1);
-            //if (chats == null)
-            //    return NotFound("nothing is here");
-            //foreach (var chat in chats)
-            //{
-            //    var receiver = dbcontext.Users.FirstOrDefault(u => u.Id == chat.Member2);
-            //    var sender = dbcontext.Users.FirstOrDefault(u => u.Id == chat.Member1);
-            //    chat.Members = new List<User>();
-            //    chat.Members.Add(receiver);
-            //    chat.Members.Add(sender);
-            //    chat.Messages = dbcontext.Messages.Where(m => m.SenderId == userid || m.ReceiverId == userid).ToList();
-            //}
-            //var chat = new Chat();
-            //chat.Member1 = 1;
-            //chat.Member2 =2 ;
-            //var message = new Message();
-            //message.Content = "hey";
-            //message.SenderId = 1;
-            //message.ReceiverId = 2;
-            //message.CreationTime = DateTime.Now.ToString();
-            //chat.Messages.Add(message);
-            //dbcontext.Chats.Add(chat);
-            //dbcontext.SaveChanges();
-
-            return Ok(user);
+            return result;
         }
         [HttpGet("getSelectedChat/{idSelected}/{idCurrent}")]
-        public IActionResult getSelectedChat(int idSelected,int idCurrent)
+        public IActionResult getSelectedChat(string idSelected, string idCurrent)
         {
-            var chat = dbcontext.Chats.FirstOrDefault(c => (c.Member1 == idSelected || c.Member2 == idSelected) && (c.Member1 == idCurrent || c.Member2 == idCurrent));
+            var chat = _context.Chats.FirstOrDefault(c => (c.Member1 == idSelected || c.Member2 == idSelected) && (c.Member1 == idCurrent || c.Member2 == idCurrent));
             //var chat = dbcontext.Chats.FirstOrDefault(c => (c.Member1 == 1 && c.Member2 == 2));
             if (chat == null)
             {
                 var newchat = new Chat(); newchat.Member2 = idSelected; newchat.Member1 = idCurrent;
-                dbcontext.Chats.Add(newchat);
-                dbcontext.SaveChanges();
+                _context.Chats.Add(newchat);
+                _context.SaveChanges();
                 return Ok(newchat);
             }
 
             //dbcontext.Messages.Add(m);
-            var messages = dbcontext.Messages.Where(ms => ms.ChatId == chat.Id).ToList();
+            var messages = _context.Messages.Where(ms => ms.ChatId == chat.Id).ToList();
             chat.Messages = messages;
             return Ok(chat);
         }
